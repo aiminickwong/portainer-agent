@@ -1,0 +1,11 @@
+version: '3.2'
+services:
+  portainer_agent:
+    image: localhost:15000/portainer-agent
+    container_name: portainer-agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    ports:
+      - 5000:5000
+    network_mode: "bridge"
