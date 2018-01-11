@@ -42,8 +42,8 @@ import org.apache.http.util.EntityUtils;
  *
  * @author WalleZhang
  */
-public class PortainerAPI {
-    private final static CloseableHttpClient httpclient = HttpClients.createDefault();
+public class PortainerApi {
+    private final static CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
     private final static String AUTH_URL = "/api/auth";
     private final static String ENDPOINTS_URL = "/api/endpoints";
     private final static String BASE_URL = System.getProperty("PORTAINER_API_URL");
@@ -70,7 +70,7 @@ public class PortainerAPI {
         CloseableHttpResponse response = null;
 
         try {
-            response = httpclient.execute(httpPost);
+            response = HTTP_CLIENT.execute(httpPost);
             AuthResponse authResponse = JSON.parseObject(EntityUtils.toString(response.getEntity()), AuthResponse.class);
             return authResponse.getJwt();
         } catch (IOException e) {
@@ -94,7 +94,7 @@ public class PortainerAPI {
         CloseableHttpResponse response = null;
         List<Map<String, Object>> endpoints = null;
         try {
-            response = httpclient.execute(httpGet);
+            response = HTTP_CLIENT.execute(httpGet);
             endpoints = JSON.parseObject(EntityUtils.toString(response.getEntity()), new TypeReference<List<Map<String, Object>>>() {
             });
         } catch (IOException e) {
@@ -144,6 +144,6 @@ public class PortainerAPI {
         requestBase.addHeader("Authorization", token);
         requestBase.setEntity(new StringEntity(JSON.toJSONString(updateEndpointRequest)));
 
-        httpclient.execute(requestBase);
+        HTTP_CLIENT.execute(requestBase);
     }
 }

@@ -38,7 +38,7 @@ public class Main {
 
         // 自动注册Endpoint
         try {
-            PortainerAPI.registerEndpoint();
+            PortainerApi.registerEndpoint();
         } catch (Exception e) {
             e.printStackTrace();
             Log.info("注册Endpoint失败");
