@@ -27,31 +27,37 @@ import java.util.concurrent.CountDownLatch;
  */
 public class Main {
 
-  private static volatile CountDownLatch countDownLatch = new CountDownLatch(1);
-  private static AsynchronousServerSocketChannel serverSocketChannel;
+    private static volatile CountDownLatch countDownLatch = new CountDownLatch(1);
+    private static AsynchronousServerSocketChannel serverSocketChannel;
 
-  public static void main(String[] args) throws IOException {
-    serverSocketChannel = AsynchronousServerSocketChannel.open()
-        .setOption(StandardSocketOptions.SO_REUSEADDR, true).bind(new InetSocketAddress(5000));
+    public static void main(String[] args) throws IOException {
+        serverSocketChannel = AsynchronousServerSocketChannel.open()
+            .setOption(StandardSocketOptions.SO_REUSEADDR, true).bind(new InetSocketAddress(5000));
 
-    serverSocketChannel.accept(null, new AcceptHandler(serverSocketChannel));
+        serverSocketChannel.accept(null, new AcceptHandler(serverSocketChannel));
 
-    // TODO: 调用portainer接口，自动注册endpoint
+        // 自动注册Endpoint
+        try {
+            PortainerAPI.registerEndpoint();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.info("注册Endpoint失败");
+        }
 
-    // 因为AIO不会阻塞调用进程，因此必须在主进程阻塞，才能保持进程存活。
-    try {
-      countDownLatch.await();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+        // 因为AIO不会阻塞调用进程，因此必须在主进程阻塞，才能保持进程存活。
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
-  }
 
-  public static void shutdown() {
-    try {
-      serverSocketChannel.close();
-    } catch (IOException e) {
-      e.printStackTrace();
+    public static void shutdown() {
+        try {
+            serverSocketChannel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        countDownLatch.countDown();
     }
-    countDownLatch.countDown();
-  }
 }

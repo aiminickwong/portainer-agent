@@ -6,6 +6,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
-    ports:
-      - 5000:5000
-    network_mode: "bridge"
+    network_mode: "host"
+    environment:
+      - PORTAINER_API_URL=http://127.0.0.1:9000
+      - PORTAINER_USERNAME=admin
+      - PORTAINER_PASSWORD=xxxxx
