@@ -46,20 +46,23 @@ public class PortainerApi {
     private final static CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
     private final static String AUTH_URL = "/api/auth";
     private final static String ENDPOINTS_URL = "/api/endpoints";
-    private final static String BASE_URL = System.getProperty("PORTAINER_API_URL");
-    private final static String USERNAME = System.getProperty("PORTAINER_USERNAME");
-    private final static String PASSWORD = System.getProperty("PORTAINER_PASSWORD");
-    private static String LOCAL_IP;
+    private final static String BASE_URL = System.getenv("PORTAINER_API_URL");
+    private final static String USERNAME = System.getenv("PORTAINER_USERNAME");
+    private final static String PASSWORD = System.getenv("PORTAINER_PASSWORD");
+    private final static String AGENT_PORT = System.getenv("PORTAINER_AGENT_PORT") == null ? "5000" : System.getenv("PORTAINER_AGENT_PORT");
+    private static String AGENT_IP;
 
     static {
         try {
-            LOCAL_IP = InetAddress.getLocalHost().getHostAddress();
+            AGENT_IP = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
+            AGENT_IP = System.getenv("PORTAINER_AGENT_IP");
         }
     }
 
     private static String auth() {
+        Log.info(String.format("请求URL：%s", BASE_URL + AUTH_URL));
         HttpPost httpPost = new HttpPost(BASE_URL + AUTH_URL);
         AuthRequest authRequest = new AuthRequest();
         authRequest.setUsername(USERNAME);
@@ -88,6 +91,7 @@ public class PortainerApi {
     }
 
     private static int getEndpointId(String authToken) throws Exception {
+        Log.info(String.format("请求URL：%s", BASE_URL + ENDPOINTS_URL));
         HttpGet httpGet = new HttpGet(BASE_URL + ENDPOINTS_URL);
         httpGet.addHeader("Authorization", authToken);
 
@@ -114,7 +118,7 @@ public class PortainerApi {
         }
 
         for (Map<String, Object> endpoint : endpoints) {
-            if (LOCAL_IP.equals(endpoint.get("Name"))) {
+            if (AGENT_IP.equals(endpoint.get("Name"))) {
                 return (int) endpoint.get("Id");
             }
         }
@@ -125,13 +129,15 @@ public class PortainerApi {
     public static void registerEndpoint() throws Exception {
         String token = auth();
         UpdateEndpointRequest updateEndpointRequest = new UpdateEndpointRequest();
-        updateEndpointRequest.setName(LOCAL_IP);
-        updateEndpointRequest.setPublicUrl(LOCAL_IP + ":5000");
-        updateEndpointRequest.setUrl(LOCAL_IP + ":5000");
+        updateEndpointRequest.setName(AGENT_IP);
+        updateEndpointRequest.setPublicUrl(AGENT_IP + ":" + AGENT_PORT);
+        updateEndpointRequest.setUrl(AGENT_IP + ":" + AGENT_PORT);
 
         HttpEntityEnclosingRequestBase requestBase;
 
         int id = getEndpointId(token);
+
+        Log.info(String.format("获取到的ID为：%s", id));
 
         if (id > 0) {
             // 若Endpoint已存在，则更新

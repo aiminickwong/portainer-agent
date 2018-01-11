@@ -31,8 +31,9 @@ public class Main {
     private static AsynchronousServerSocketChannel serverSocketChannel;
 
     public static void main(String[] args) throws IOException {
+        String port = System.getenv("PORTAINER_AGENT_PORT") == null ? "5000" : System.getenv("PORTAINER_AGENT_PORT");
         serverSocketChannel = AsynchronousServerSocketChannel.open()
-            .setOption(StandardSocketOptions.SO_REUSEADDR, true).bind(new InetSocketAddress(5000));
+            .setOption(StandardSocketOptions.SO_REUSEADDR, true).bind(new InetSocketAddress(Integer.valueOf(port)));
 
         serverSocketChannel.accept(null, new AcceptHandler(serverSocketChannel));
 

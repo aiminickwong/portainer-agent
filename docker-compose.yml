@@ -5,9 +5,12 @@ services:
     container_name: portainer-agent
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/hosts:/etc/hosts:ro
     restart: always
     network_mode: "host"
     environment:
       - PORTAINER_API_URL=http://127.0.0.1:9000
       - PORTAINER_USERNAME=admin
       - PORTAINER_PASSWORD=xxxxx
+      - PORTAINER_AGENT_IP=127.0.0.1
+      - PORTAINER_AGENT_PORT=5000
