@@ -23,57 +23,57 @@ import java.nio.channels.CompletionHandler;
 import jnr.unixsocket.UnixSocketChannel;
 
 /**
- * 回写到portainer中
+ * Write back to portainer
  *
  * @author WalleZhang
  */
 public class WriteBackHandler implements CompletionHandler<Integer, ByteBuffer> {
 
-  private AsynchronousSocketChannel channel;
-  private UnixSocketChannel unixSocketChannel;
+    private AsynchronousSocketChannel channel;
+    private UnixSocketChannel unixSocketChannel;
 
-  WriteBackHandler(AsynchronousSocketChannel channel, UnixSocketChannel unixSocketChannel) {
-    this.channel = channel;
-    this.unixSocketChannel = unixSocketChannel;
-  }
+    WriteBackHandler(AsynchronousSocketChannel channel, UnixSocketChannel unixSocketChannel) {
+        this.channel = channel;
+        this.unixSocketChannel = unixSocketChannel;
+    }
 
-  @Override
-  public void completed(Integer result, ByteBuffer attachment) {
-    // buffer中是否还有剩余字节未写完
-    if (attachment.hasRemaining()) {
-      // 继续写入剩下的数据
-      channel.write(attachment, attachment, this);
-    } else {
-      // 如果读取到的字节数小于容量，说明docker socket的数据已全部读完
-      // 反之，需要继续读取剩余部分的数据
-      if (attachment.limit() < attachment.capacity()) {
-        // 分配读取缓冲区
-        ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-        // 异步读Portainer发送的数据
-        channel.read(readBuffer, readBuffer, new ReadHandler(unixSocketChannel, channel));
-      } else {
-        attachment.clear();
-        try {
-          // 继续从docker socket中读取剩余的数据
-          unixSocketChannel.read(attachment);
-          attachment.flip();
-          channel.write(attachment, attachment, this);
-        } catch (IOException e) {
-          e.printStackTrace();
+    @Override
+    public void completed(Integer result, ByteBuffer attachment) {
+        // Whether the remaining bytes in the buffer have not been written
+        if (attachment.hasRemaining()) {
+            // Write remaining data
+            channel.write(attachment, attachment, this);
+        } else {
+            // If the number of bytes read is less than the capacity, the data from docker unix socket has been all read
+            // or read remaining data
+            if (attachment.limit() < attachment.capacity()) {
+                // Allocate read buffer
+                ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+                // read data from portainer asynchronously
+                channel.read(readBuffer, readBuffer, new ReadHandler(unixSocketChannel, channel));
+            } else {
+                attachment.clear();
+                try {
+                    // Read remaining data from docker unix socket
+                    unixSocketChannel.read(attachment);
+                    attachment.flip();
+                    channel.write(attachment, attachment, this);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-      }
     }
-  }
 
-  @Override
-  public void failed(Throwable exc, ByteBuffer attachment) {
-    exc.printStackTrace();
-    try {
-      channel.close();
-      unixSocketChannel.close();
-    } catch (IOException e) {
-      e.printStackTrace();
+    @Override
+    public void failed(Throwable exc, ByteBuffer attachment) {
+        exc.printStackTrace();
+        try {
+            channel.close();
+            unixSocketChannel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Log.info("Write back to portainer error, close channels.");
     }
-    Log.info("写回portainer出错，关闭双向channel");
-  }
 }

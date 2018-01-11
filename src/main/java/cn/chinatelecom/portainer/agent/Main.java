@@ -37,15 +37,15 @@ public class Main {
 
         serverSocketChannel.accept(null, new AcceptHandler(serverSocketChannel));
 
-        // 自动注册Endpoint
+        // register endpoint to portainer automatically
         try {
             PortainerApi.registerEndpoint();
         } catch (Exception e) {
             e.printStackTrace();
-            Log.info("注册Endpoint失败");
+            Log.info("Register endpoint fail!");
         }
 
-        // 因为AIO不会阻塞调用进程，因此必须在主进程阻塞，才能保持进程存活。
+        // Because AIO is non-blocking, so this will prevent the main process exit.
         try {
             countDownLatch.await();
         } catch (InterruptedException e) {

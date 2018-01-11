@@ -19,7 +19,7 @@ package cn.chinatelecom.portainer.agent.model;
 import com.alibaba.fastjson.annotation.JSONField;
 
 /**
- * 认证请求实体
+ * portainer auth request model
  *
  * @author WalleZhang
  */

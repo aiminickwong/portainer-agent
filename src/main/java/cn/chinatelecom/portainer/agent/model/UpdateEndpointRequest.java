@@ -19,7 +19,7 @@ package cn.chinatelecom.portainer.agent.model;
 import com.alibaba.fastjson.annotation.JSONField;
 
 /**
- * 创建或更新Endpoint模型
+ * create or update endpoint request model
  *
  * @author WalleZhang
  */

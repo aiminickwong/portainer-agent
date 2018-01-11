@@ -27,7 +27,7 @@ import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
 
 /**
- * 接收新连接之后的处理类
+ * Handler for new accepted connection
  *
  * @author WalleZhang
  */
@@ -41,10 +41,10 @@ public class AcceptHandler implements CompletionHandler<AsynchronousSocketChanne
 
   @Override
   public void completed(AsynchronousSocketChannel channel, Object attachment) {
-    // 接收下一个新连接
+    // accept next new connection
     serverSocketChannel.accept(null, this);
 
-    // 连接docker.sock
+    // connect to docker unix socket
     File path = new File("/var/run/docker.sock");
     int retries = 0;
     while (!path.exists()) {
@@ -55,7 +55,7 @@ public class AcceptHandler implements CompletionHandler<AsynchronousSocketChanne
       }
       retries++;
       if (retries > 5) {
-        Log.info(String.format("文件 %s 不存在", path.getAbsolutePath()));
+        Log.info(String.format("File %s is not exist", path.getAbsolutePath()));
         Main.shutdown();
       }
     }
@@ -64,16 +64,16 @@ public class AcceptHandler implements CompletionHandler<AsynchronousSocketChanne
     UnixSocketChannel unixSocketChannel;
     try {
       unixSocketChannel = UnixSocketChannel.open(address);
-      Log.info("已经连接到 " + unixSocketChannel.getRemoteSocketAddress());
+      Log.info("Already connected to " + unixSocketChannel.getRemoteSocketAddress());
     } catch (IOException e) {
       e.printStackTrace();
-      Log.info("连接docker socket失败");
+      Log.info("Connect to docker unix socket fail!");
       return;
     }
 
-    // 分配读取缓冲区
+    // allocate read buffer
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-    // 异步读Portainer发送的数据
+    // read data from portainer asynchronously
     channel.read(readBuffer, readBuffer, new ReadHandler(unixSocketChannel, channel));
   }
 

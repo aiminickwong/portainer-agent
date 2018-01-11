@@ -17,7 +17,7 @@
 package cn.chinatelecom.portainer.agent.model;
 
 /**
- * 认证响应模型
+ * portainer auth response model
  *
  * @author WalleZhang
  */

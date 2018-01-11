@@ -23,66 +23,65 @@ import java.nio.channels.CompletionHandler;
 import jnr.unixsocket.UnixSocketChannel;
 
 /**
- * 从Portainer读取数据的处理方法，读取并转发到docker.sock
+ * Read data from portainer and transfer to docker unix socket
  *
  * @author WalleZhang
  */
 public class ReadHandler implements CompletionHandler<Integer, ByteBuffer> {
 
-  private UnixSocketChannel unixSocketChannel;
-  private AsynchronousSocketChannel channel;
+    private UnixSocketChannel unixSocketChannel;
+    private AsynchronousSocketChannel channel;
 
-  ReadHandler(UnixSocketChannel unixSocketChannel, AsynchronousSocketChannel channel) {
-    this.unixSocketChannel = unixSocketChannel;
-    this.channel = channel;
-  }
+    ReadHandler(UnixSocketChannel unixSocketChannel, AsynchronousSocketChannel channel) {
+        this.unixSocketChannel = unixSocketChannel;
+        this.channel = channel;
+    }
 
-  @Override
-  public void completed(Integer result, ByteBuffer attachment) {
-    // 如果读取的字节数大于0，则代表有数据
-    if (result > 0) {
-      // 写入docker socket
-      attachment.flip();
-      try {
-        // 写入docker socket
-        unixSocketChannel.write(attachment);
-        // 如果buffer的存储数据小于容量，说明所有数据读取完成
-        if (attachment.limit() < attachment.capacity()) {
-          // 从docker socket读取数据
-          ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-          unixSocketChannel.read(byteBuffer);
-          byteBuffer.flip();
-          // 回写到portainer中
-          channel.write(byteBuffer, byteBuffer, new WriteBackHandler(channel, unixSocketChannel));
+    @Override
+    public void completed(Integer result, ByteBuffer attachment) {
+        // read new data if result length is greater than 0
+        if (result > 0) {
+            attachment.flip();
+            try {
+                // write to docker unix socket
+                unixSocketChannel.write(attachment);
+                // All data is read if buffer limit is less than capacity
+                if (attachment.limit() < attachment.capacity()) {
+                    // Read data from docker unix socket
+                    ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+                    unixSocketChannel.read(byteBuffer);
+                    byteBuffer.flip();
+                    // Write back to portainer
+                    channel.write(byteBuffer, byteBuffer, new WriteBackHandler(channel, unixSocketChannel));
 
+                } else {
+                    // Read remain bytes
+                    attachment.clear();
+                    channel.read(attachment, attachment, this);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
-          // 读取剩余字节
-          attachment.clear();
-          channel.read(attachment, attachment, this);
+            // Read the end of the channel, close it
+            try {
+                unixSocketChannel.close();
+                channel.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    } else {
-      // 读取到channel末尾，关闭channel
-      try {
-        unixSocketChannel.close();
-        channel.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
-  }
 
-  @Override
-  public void failed(Throwable exc, ByteBuffer attachment) {
-    exc.printStackTrace();
-    try {
-      unixSocketChannel.close();
-      channel.close();
-    } catch (IOException e) {
-      e.printStackTrace();
+    @Override
+    public void failed(Throwable exc, ByteBuffer attachment) {
+        exc.printStackTrace();
+        try {
+            unixSocketChannel.close();
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Log.info("Read data from portainer error, close channels.");
     }
-    Log.info("从portainer读取出错，关闭双向channel");
-  }
 }

@@ -38,7 +38,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 /**
- * 发起到portainer的自注册请求
+ * Send register request to portainer
  *
  * @author WalleZhang
  */
@@ -61,8 +61,11 @@ public class PortainerApi {
         }
     }
 
+    /**
+     * Get authentication token
+     */
     private static String auth() {
-        Log.info(String.format("请求URL：%s", BASE_URL + AUTH_URL));
+        Log.info(String.format("Request URL is %s", BASE_URL + AUTH_URL));
         HttpPost httpPost = new HttpPost(BASE_URL + AUTH_URL);
         AuthRequest authRequest = new AuthRequest();
         authRequest.setUsername(USERNAME);
@@ -90,8 +93,15 @@ public class PortainerApi {
         return null;
     }
 
+    /**
+     * Get endpoint id.
+     *
+     * @param authToken authentication header
+     * @return endpoint id or -1 if endpoint is not exist.
+     * @throws Exception get endpoint fail
+     */
     private static int getEndpointId(String authToken) throws Exception {
-        Log.info(String.format("请求URL：%s", BASE_URL + ENDPOINTS_URL));
+        Log.info(String.format("Request URL is %s", BASE_URL + ENDPOINTS_URL));
         HttpGet httpGet = new HttpGet(BASE_URL + ENDPOINTS_URL);
         httpGet.addHeader("Authorization", authToken);
 
@@ -114,7 +124,7 @@ public class PortainerApi {
         }
 
         if (endpoints == null) {
-            throw new Exception("获取Endpoints失败！");
+            throw new Exception("Get Endpoints failed!");
         }
 
         for (Map<String, Object> endpoint : endpoints) {
@@ -126,6 +136,11 @@ public class PortainerApi {
         return -1;
     }
 
+    /**
+     * register endpoint automatically
+     *
+     * @throws Exception register failed
+     */
     public static void registerEndpoint() throws Exception {
         String token = auth();
         UpdateEndpointRequest updateEndpointRequest = new UpdateEndpointRequest();
@@ -137,13 +152,13 @@ public class PortainerApi {
 
         int id = getEndpointId(token);
 
-        Log.info(String.format("获取到的ID为：%s", id));
+        Log.info(String.format("Get endpoint id is %s", id));
 
         if (id > 0) {
-            // 若Endpoint已存在，则更新
+            // Update endpoint if it is exist
             requestBase = new HttpPut(BASE_URL + ENDPOINTS_URL + "/" + id);
         } else {
-            // 不存在，新建
+            // Or create a new one
             requestBase = new HttpPost(BASE_URL + ENDPOINTS_URL);
         }
 
