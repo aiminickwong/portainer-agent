@@ -130,7 +130,7 @@ public class PortainerApi {
         String token = auth();
         UpdateEndpointRequest updateEndpointRequest = new UpdateEndpointRequest();
         updateEndpointRequest.setName(AGENT_IP);
-        updateEndpointRequest.setPublicUrl(AGENT_IP + ":" + AGENT_PORT);
+        updateEndpointRequest.setPublicUrl(AGENT_IP);
         updateEndpointRequest.setUrl(AGENT_IP + ":" + AGENT_PORT);
 
         HttpEntityEnclosingRequestBase requestBase;
