@@ -146,7 +146,7 @@ public class PortainerApi {
         UpdateEndpointRequest updateEndpointRequest = new UpdateEndpointRequest();
         updateEndpointRequest.setName(AGENT_IP);
         updateEndpointRequest.setPublicUrl(AGENT_IP);
-        updateEndpointRequest.setUrl(AGENT_IP + ":" + AGENT_PORT);
+        updateEndpointRequest.setUrl("tcp://" + AGENT_IP + ":" + AGENT_PORT);
 
         HttpEntityEnclosingRequestBase requestBase;
 
